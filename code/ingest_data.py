@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 import os
 
 
-DB_URL = 'postgresql://postgres:postgres123@localhost:5432/project3'
+DB_URL = 'postgresql://postgres:key@localhost:5432/project3'
 engine = create_engine(DB_URL)
 
 def extract_data():
@@ -75,4 +75,5 @@ if __name__ == "__main__":
     load_to_postgres(date_curatate)
     print("Process done")
 else:
+
     print(" Error: Check the folder")
