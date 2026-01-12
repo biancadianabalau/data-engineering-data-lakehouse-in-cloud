@@ -1,0 +1,38 @@
+--the Bronze layer is implemented using External Tables in Databricks, pointing directly to the Parquet files stored in the AWS S3 Landing Zone.
+
+CREATE SCHEMA IF NOT EXISTS bronze;
+CREATE TABLE IF NOT EXISTS bronze.customers
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.customers';
+
+CREATE TABLE IF NOT EXISTS bronze.products
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.products';
+
+CREATE TABLE IF NOT EXISTS bronze.product_category_translation
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.product_category_translation';
+
+CREATE TABLE IF NOT EXISTS bronze.sellers
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.sellers';
+
+CREATE TABLE IF NOT EXISTS bronze.geolocation
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.geolocation';
+
+CREATE TABLE IF NOT EXISTS bronze.orders
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.orders';
+
+CREATE TABLE IF NOT EXISTS bronze.order_items
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.order_items';
+
+CREATE TABLE IF NOT EXISTS bronze.order_payments
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.order_payments';
+
+CREATE TABLE IF NOT EXISTS bronze.order_reviews
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/bronze/bronze.order_reviews';
