@@ -1,4 +1,15 @@
---the Bronze layer is implemented using External Tables in Databricks, pointing directly to the Parquet files stored in the AWS S3 Landing Zone.
+/*
+-------
+DDL Script: Create Bronze Tables
+-------
+Script Purpose:
+This script will create tables in the 'bronze' schema, dropping existing tables if they already exist.
+The Bronze layer is implemented using External Tables in Databricks, pointing directly to the Parquet files stored in the AWS S3 Landing Zone.
+-------
+
+*/
+
+
 
 CREATE SCHEMA IF NOT EXISTS bronze;
 CREATE TABLE IF NOT EXISTS bronze.customers
