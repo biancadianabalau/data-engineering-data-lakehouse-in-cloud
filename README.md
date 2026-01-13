@@ -38,3 +38,7 @@ A Python script extracts data from PostgreSQL and offloads it to AWS S3 as Parqu
 - Performance: Optimized storage by using Delta Lake, enabling faster queries and data versioning.
 
 - Cloud Scalability: Decoupled compute (Databricks) from storage (S3).
+
+
+## Data Source
+This project utilizes the Brazilian E-Commerce Public Dataset by Olist, a comprehensive collection of 100k real-world anonymized orders from 2016 to 2018, providing a complex relational structure ideal for demonstrating large-scale data integration.
