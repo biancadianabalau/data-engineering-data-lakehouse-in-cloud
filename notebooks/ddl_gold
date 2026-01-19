@@ -1,0 +1,102 @@
+CREATE SCHEMA IF NOT EXISTS gold;
+
+
+DROP TABLE IF EXISTS gold.fact_sales_order_level;
+DROP TABLE IF EXISTS gold.fact_sales_item_level;
+DROP TABLE IF EXISTS gold.dim_sellers_performance;
+DROP TABLE IF EXISTS gold.dim_customers_segmentation;
+DROP TABLE IF EXISTS gold.dim_geography_market;
+
+
+CREATE OR REPLACE TABLE gold.fact_sales_item_level
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/gold/fact_sales_item_level'
+AS
+SELECT 
+    oi.order_id,
+    oi.order_item_id,
+    oi.product_id,
+    oi.seller_id,
+    o.customer_id,
+    oi.shipping_limit_date,
+    oi.price AS item_price,
+    oi.freight_value AS item_freight,
+    (oi.price + oi.freight_value) AS item_total_value,
+    p.product_category_name_english,
+    o.order_status,
+    o.order_purchase_timestamp AS sale_date
+FROM silver.order_items oi  
+JOIN silver.orders o ON oi.order_id = o.order_id
+LEFT JOIN (
+    SELECT pr.product_id, tr.product_category_name_english
+    FROM silver.products pr
+    JOIN silver.product_category_translation tr 
+      ON pr.product_category_name = tr.product_category_name
+) p ON oi.product_id = p.product_id;
+
+
+CREATE OR REPLACE TABLE gold.fact_sales_order_level
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/gold/fact_sales_order_level'
+AS
+SELECT 
+    o.order_id,
+    o.customer_id,
+    o.order_status,
+    o.order_purchase_timestamp AS sale_date,
+    SUM(oi.price) AS total_items_price,
+    SUM(oi.freight_value) AS total_freight_value,
+    SUM(oi.price + oi.freight_value) AS total_order_value,
+    COUNT(oi.product_id) AS total_items_count,
+    MAX(pay.payment_type) AS primary_payment_type
+FROM silver.orders o
+JOIN silver.order_items oi ON o.order_id = oi.order_id 
+LEFT JOIN silver.order_payments pay ON o.order_id = pay.order_id
+GROUP BY o.order_id, o.customer_id, o.order_status, o.order_purchase_timestamp;
+
+-- 4. Dim Customers Segmentation
+CREATE OR REPLACE TABLE gold.dim_customers_segmentation
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/gold/dim_customers_segmentation'
+AS
+SELECT 
+    customer_id,
+    customer_unique_id,
+    customer_city,
+    customer_state,
+    CASE 
+        WHEN customer_state IN ('SP', 'RJ', 'MG', 'ES') THEN 'Southeast'
+        WHEN customer_state IN ('BA', 'SE', 'PE', 'AL', 'PB', 'CE', 'PI', 'MA', 'RN') THEN 'Northeast'
+        WHEN customer_state IN ('PR', 'SC', 'RS') THEN 'South'
+        WHEN customer_state IN ('DF', 'GO', 'MT', 'MS') THEN 'Central-West'
+        WHEN customer_state IN ('AC', 'PA', 'AP', 'AM', 'RR', 'RO', 'TO') THEN 'North'
+        ELSE 'Unknown' 
+    END AS geographical_region
+FROM silver.customers;
+
+
+CREATE OR REPLACE TABLE gold.dim_sellers_performance
+USING DELTA
+LOCATION 's3://etl-project3-data-warehouse-in-cloud/gold/dim_sellers_performance'
+AS
+WITH seller_metrics AS (
+    SELECT 
+        seller_id,
+        COUNT(DISTINCT order_id) as total_orders,
+        SUM(price) as total_revenue
+    FROM silver.order_items 
+    GROUP BY seller_id
+)
+SELECT 
+    s.seller_id,
+    s.seller_city,
+    s.seller_state,
+    COALESCE(sm.total_orders, 0) as total_orders,
+    COALESCE(sm.total_revenue, 0) as total_revenue,
+    CASE 
+        WHEN sm.total_revenue > 10000 THEN 'Top Seller'
+        WHEN sm.total_revenue BETWEEN 2000 AND 10000 THEN 'Medium Seller'
+        ELSE 'Small Seller'
+    END AS seller_tier
+FROM silver.sellers s
+LEFT JOIN seller_metrics sm ON s.seller_id = sm.seller_id;
