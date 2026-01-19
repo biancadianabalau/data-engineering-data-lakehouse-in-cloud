@@ -1,0 +1,20 @@
+# Airflow files
+logs/
+plugins/
+airflow.db
+*.log
+
+# Python/Environment
+__pycache__/
+*.py[cod]
+.env
+venv/
+.venv/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Credentials (just in case you have local files)
+*.pem
+credentials.json
